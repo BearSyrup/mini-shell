@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "codelldb",
+            "request": "launch",
+            "name": "C",
+            "stdio": [
+                "../bin/mini-shell",
+                null
+            ],
+            "preLaunchTask": "Compile",
+            "postDebugTask": "Clean",
+            "expressions": "native",
+            "program": "${workspaceFolder}/${fileBasenameNoExtension}"
+        }
+    ]
+}
