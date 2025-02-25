@@ -8,8 +8,8 @@
 *.elf
 
 #folder
-./bin/
-./out/
+/bin
+/out
 
 # Linker output
 *.ilk
