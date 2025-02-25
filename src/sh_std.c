@@ -1,5 +1,6 @@
 #include "../headers/sh_std.h"
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 char **split(char *str, const char a_delim) {
@@ -36,16 +37,22 @@ char **split(char *str, const char a_delim) {
   return result;
 }
 char *fpath(char *command) {
+  int i = 0;
+  char slash = '/';
   char **envs;
+  char *cpy_penv, *file_path, *slashptr;
   const char *path_name = "PATH";
   char *penv = getenv(path_name);
-  char *file_path;
-  int i = 0;
 
-  envs = split(penv, ':');
+  slashptr = strchr(command, slash);
+  if (slashptr != NULL)
+    return command;
 
   file_path = malloc(sizeof(char) * 1024);
+  cpy_penv = malloc(sizeof(char) * strlen(penv) * 2);
 
+  snprintf(cpy_penv, strlen(penv) + 1, "%s", penv);
+  envs = split(cpy_penv, ':');
   if (!file_path) {
     fprintf(stderr, "minish: allocator error");
     exit(1);
@@ -55,10 +62,10 @@ char *fpath(char *command) {
   while (envs[i++]) {
     snprintf(file_path, 1024, "%s/%s", envs[i], command);
     if (access(file_path, F_OK | X_OK) == 0) {
-      free(envs);
       return file_path;
     }
   }
   free(envs);
+  free(penv);
   return NULL;
 }

@@ -37,7 +37,7 @@ void sh_exec(char *command) {
   if (strcmp(command, "cd") != 0) {
 
     file_path = fpath(command);
-    // execvp(args[0], args);
+
     pid = fork();
     if (pid == 0) {
       execve(file_path, args, NULL);
