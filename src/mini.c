@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 char *sh_readline() {
@@ -27,13 +28,18 @@ char *sh_readline() {
   return buffer;
 }
 
-void sh_exec(char *command) {
+pid_t sh_exec(char *command) {
   char **args;
   char *file_path;
+  pid_t result;
+  int pid;
+
+  if (strcmp(command, "exit")) {
+    exit(0);
+  }
 
   args = split(command, ' ');
 
-  int pid;
   if (strcmp(command, "cd") != 0) {
 
     file_path = fpath(command);
@@ -41,11 +47,14 @@ void sh_exec(char *command) {
     pid = fork();
     if (pid == 0) {
       execve(file_path, args, NULL);
+      free(args);
       free(file_path);
+      args = NULL;
+      file_path = NULL;
     }
-    wait(&pid);
-    return;
+    result = wait(&pid);
+    return result;
   }
 
-  go_directory(args[1]);
+  return go_directory(args[1]);
 }

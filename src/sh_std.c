@@ -1,6 +1,8 @@
 #include "../headers/sh_std.h"
+#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 char **split(char *str, const char a_delim) {
@@ -35,6 +37,14 @@ char **split(char *str, const char a_delim) {
   }
 
   return result;
+}
+const char *uname() {
+  uid_t uid = geteuid();
+  struct passwd *pw = getpwuid(uid);
+  if (pw) {
+    return pw->pw_name;
+  }
+  return "";
 }
 char *fpath(char *command) {
   int i = 0;

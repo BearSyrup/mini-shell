@@ -10,5 +10,5 @@
 #define BUFSIZE 2048
 
 char *sh_readline();
-void sh_exec(char *command);
+int sh_exec(char *command);
 #endif // !MINI
