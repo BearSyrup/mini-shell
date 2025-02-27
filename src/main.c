@@ -1,10 +1,7 @@
 #include "../headers/main.h"
-#include <sys/types.h>
-#include <unistd.h>
 
 int main(void) {
   char *line;
-  pid_t result;
   char hostname[1024];
   gethostname(hostname, 1024);
 
@@ -13,7 +10,7 @@ int main(void) {
                            " >> " ANSI_COLOR_RESET,
            uname(), hostname);
     line = sh_readline();
-    result = sh_exec(line);
+    sh_exec(line);
   }
   return EXIT_SUCCESS;
 }
