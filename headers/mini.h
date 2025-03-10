@@ -12,4 +12,5 @@
 
 char *sh_readline();
 void sh_exec(char *command);
+int command_exec(char *file_path, char **args);
 #endif // !MINI

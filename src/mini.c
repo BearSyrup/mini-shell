@@ -29,21 +29,30 @@ char *sh_readline() {
 }
 
 void sh_exec(char *command) {
-  char **args;
   char *file_path;
-  int pid;
+  char **args;
+  char delim[2] = {' ', '\0'};
 
   if (strcmp(command, "exit") == 0) {
     exit(0);
   }
 
-  args = split(command, ' ');
+  args = split(command, delim);
 
   if (strcmp(args[0], "cd") == 0) {
     go_directory(args[1]);
+    return;
   }
 
   file_path = fpath(args[0]);
+  command_exec(file_path, args);
+
+  free(file_path);
+  free(args);
+}
+
+int command_exec(char *file_path, char **args) {
+  int pid;
 
   pid = fork();
   if (pid == -1) {
@@ -51,10 +60,6 @@ void sh_exec(char *command) {
                                    "fork failed" ANSI_COLOR_RESET);
   } else if (pid == 0) {
     execve(file_path, args, NULL);
-    free(args);
-    free(file_path);
-    args = NULL;
-    file_path = NULL;
   } else {
     int status;
     pid_t child_pid = waitpid(pid, &status, 0);
@@ -62,7 +67,7 @@ void sh_exec(char *command) {
       fprintf(stderr, ANSI_COLOR_RED "wait pid failed" ANSI_COLOR_RESET);
       exit(EXIT_FAILURE);
     }
-    if (WIFEXITED(status)) {
+    if (!WIFEXITED(status)) {
       int exit_status = WEXITSTATUS(status);
       fprintf(stderr,
               ANSI_COLOR_RED
@@ -82,5 +87,6 @@ void sh_exec(char *command) {
               child_pid, stop_signal);
     }
   }
+  return 0;
 }
 int builtin(char *command) { return 0; }

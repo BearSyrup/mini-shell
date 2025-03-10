@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-char **split(char *str, const char a_delim);
+char **split(char *str, const char *delim);
 char *fpath(char *command);
 const char *uname();
 #endif

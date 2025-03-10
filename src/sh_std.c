@@ -5,24 +5,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-char **split(char *str, const char a_delim) {
+char **split(char *str, const char *delim) {
   char **result;
-  size_t count, idx;
+  size_t idx;
   char *tmp, *token;
-  char delim[2];
-  delim[0] = a_delim;
-  delim[1] = '\0';
 
-  count = 0;
-  tmp = strdup(str);
-  while (*tmp) {
-    if (*tmp == a_delim) {
-      count++;
-    }
-    tmp++;
-  }
-  count++;
-  result = malloc(sizeof(char *) * count);
+  result = malloc(sizeof(char *) * strlen(str));
 
   if (result) {
     idx = 0;
@@ -38,6 +26,7 @@ char **split(char *str, const char a_delim) {
 
   return result;
 }
+
 const char *uname() {
   uid_t uid = geteuid();
   struct passwd *pw = getpwuid(uid);
@@ -46,6 +35,7 @@ const char *uname() {
   }
   return "";
 }
+
 char *fpath(char *command) {
   int i = 0;
   char slash = '/';
@@ -62,7 +52,7 @@ char *fpath(char *command) {
   cpy_penv = malloc(sizeof(char) * strlen(penv) * 2);
 
   snprintf(cpy_penv, strlen(penv) + 1, "%s", penv);
-  envs = split(cpy_penv, ':');
+  envs = split(cpy_penv, ":");
   if (!file_path) {
     fprintf(stderr, "minish: allocator error");
     exit(1);
