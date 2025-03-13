@@ -1,4 +1,5 @@
 #include "../headers/mini.h"
+#include "../headers/command_list.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,21 +32,27 @@ char *sh_readline() {
 void sh_exec(char *command) {
   char *file_path;
   char **args;
+  int status;
+  command_list *commands;
   char delim[2] = {' ', '\0'};
 
-  if (strcmp(command, "exit") == 0) {
+  commands = split_command_list(command);
+
+  if (strcmp(commands->command, "exit") == 0) {
     exit(0);
   }
 
-  args = split(command, delim);
+  while (commands != NULL) {
+    args = split(commands->command, delim);
+    if (strcmp(args[0], "cd") == 0) {
+      status = go_directory(args[1]);
+      return;
+    }
 
-  if (strcmp(args[0], "cd") == 0) {
-    go_directory(args[1]);
-    return;
+    file_path = fpath(args[0]);
+    status = command_exec(file_path, args);
+    commands = commands->next;
   }
-
-  file_path = fpath(args[0]);
-  command_exec(file_path, args);
 
   free(file_path);
   free(args);
@@ -53,6 +60,7 @@ void sh_exec(char *command) {
 
 int command_exec(char *file_path, char **args) {
   int pid;
+  int status;
 
   pid = fork();
   if (pid == -1) {
@@ -61,7 +69,6 @@ int command_exec(char *file_path, char **args) {
   } else if (pid == 0) {
     execve(file_path, args, NULL);
   } else {
-    int status;
     pid_t child_pid = waitpid(pid, &status, 0);
     if (child_pid == -1) {
       fprintf(stderr, ANSI_COLOR_RED "wait pid failed" ANSI_COLOR_RESET);
@@ -87,6 +94,6 @@ int command_exec(char *file_path, char **args) {
               child_pid, stop_signal);
     }
   }
-  return 0;
+  return status;
 }
 int builtin(char *command) { return 0; }

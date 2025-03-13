@@ -14,6 +14,7 @@ int go_directory(char *directory) {
   }
   return 1;
 }
+
 void get_working_dir(char **buff) {
   char path[PATH_MAX];
   if (!getcwd(path, PATH_MAX)) {
@@ -21,6 +22,7 @@ void get_working_dir(char **buff) {
   }
   strcpy(*buff, path);
 }
+
 void get_real_path(const char *directory, char **buff) {
   char *path;
   path = malloc(PATH_MAX);
