@@ -27,6 +27,23 @@ char **split(char *str, const char *delim) {
   return result;
 }
 
+char **split_first(char *str, const char *delim) {
+  char **result;
+  char *tmp, *token;
+
+  result = malloc(sizeof(char *) * strlen(str));
+  token = strtok(str, delim);
+
+  if (result) {
+    result[0] = strdup(token);
+    token = strtok(NULL, "");
+    if (token) {
+      result[1] = strdup(token);
+    }
+  }
+  return result;
+}
+
 const char *uname() {
   uid_t uid = geteuid();
   struct passwd *pw = getpwuid(uid);

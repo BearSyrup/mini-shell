@@ -6,4 +6,5 @@
 char **split(char *str, const char *delim);
 char *fpath(char *command);
 const char *uname();
+char **split_first(char *str, const char *delim);
 #endif

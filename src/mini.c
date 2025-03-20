@@ -56,6 +56,7 @@ void sh_exec(char *command) {
 
   free(file_path);
   free(args);
+  command_clean(commands);
 }
 
 int command_exec(char *file_path, char **args) {
