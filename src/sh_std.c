@@ -1,6 +1,7 @@
 #include "../headers/sh_std.h"
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -29,18 +30,18 @@ char **split(char *str, const char *delim) {
 
 char **split_first(char *str, const char *delim) {
   char **result;
-  char *tmp, *token;
+  char *token;
 
-  result = malloc(sizeof(char *) * strlen(str));
-  token = strtok(str, delim);
+  char *delim_pos = strstr(str, delim);
+  result = malloc(sizeof(char *) * (strlen(str) + 1));
+  size_t first_len = delim_pos - str;
+  result[0] = malloc(first_len * sizeof(char *));
+  strncpy(result[0], str, first_len);
+  result[0][first_len] = '\0';
 
-  if (result) {
-    result[0] = strdup(token);
-    token = strtok(NULL, "");
-    if (token) {
-      result[1] = strdup(token);
-    }
-  }
+  result[1] = malloc(sizeof(delim_pos + strlen(delim)));
+  strcpy(result[1], delim_pos + strlen(delim));
+
   return result;
 }
 

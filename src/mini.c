@@ -32,7 +32,7 @@ char *sh_readline() {
 void sh_exec(char *command) {
   char *file_path;
   char **args;
-  int status;
+  int status, should_run_next;
   command_list *commands;
   char delim[2] = {' ', '\0'};
 
@@ -42,21 +42,40 @@ void sh_exec(char *command) {
     exit(0);
   }
 
+  should_run_next = 1;
   while (commands != NULL) {
-    args = split(commands->command, delim);
-    if (strcmp(args[0], "cd") == 0) {
-      status = go_directory(args[1]);
-      return;
+    if (should_run_next) {
+      args = split(commands->command, delim);
+      if (strcmp(args[0], "cd") == 0) {
+        status = go_directory(args[1]);
+        state_tracking(&should_run_next, status, commands->next_op);
+        commands = commands->next;
+        continue;
+      }
+      file_path = fpath(args[0]);
+      status = command_exec(file_path, args);
+      state_tracking(&should_run_next, status, commands->next_op);
+    } else {
+      should_run_next = 1;
     }
-
-    file_path = fpath(args[0]);
-    status = command_exec(file_path, args);
     commands = commands->next;
   }
 
   free(file_path);
   free(args);
   command_clean(commands);
+}
+
+void state_tracking(int *should_run, int status, list_op op) {
+  if (status != 0 && (op == AND_OP || op != OR_OP)) {
+    *should_run = 1;
+  } else if (status == 0 && (op == OR_OP || op != AND_OP)) {
+    *should_run = 1;
+  } else if (status != 0 && (op == OR_OP)) {
+    *should_run = 0;
+  } else {
+    *should_run = 1;
+  }
 }
 
 int command_exec(char *file_path, char **args) {
@@ -67,13 +86,16 @@ int command_exec(char *file_path, char **args) {
   if (pid == -1) {
     fprintf(stderr, ANSI_COLOR_RED "\x1b[31m"
                                    "fork failed" ANSI_COLOR_RESET);
+    return -1;
   } else if (pid == 0) {
     execve(file_path, args, NULL);
+    return 0;
   } else {
     pid_t child_pid = waitpid(pid, &status, 0);
     if (child_pid == -1) {
       fprintf(stderr, ANSI_COLOR_RED "wait pid failed" ANSI_COLOR_RESET);
       exit(EXIT_FAILURE);
+      return -1;
     }
     if (!WIFEXITED(status)) {
       int exit_status = WEXITSTATUS(status);
@@ -81,20 +103,22 @@ int command_exec(char *file_path, char **args) {
               ANSI_COLOR_RED
               "Child process %d exited with status  %d\n" ANSI_COLOR_RESET,
               child_pid, exit_status);
+      return -1;
     } else if (WIFSIGNALED(status)) {
       int signal_num = WTERMSIG(status);
       fprintf(stderr,
               ANSI_COLOR_RED
               "child process %d exited with signal %d\n" ANSI_COLOR_RESET,
               child_pid, signal_num);
+      return -1;
     } else if (WIFSTOPPED(status)) {
       int stop_signal = WSTOPSIG(status);
       fprintf(stderr,
               ANSI_COLOR_RED
               "Child process %d stopped by signal %d\n" ANSI_COLOR_RESET,
               child_pid, stop_signal);
+      return -1;
     }
   }
-  return status;
+  return 0;
 }
-int builtin(char *command) { return 0; }
