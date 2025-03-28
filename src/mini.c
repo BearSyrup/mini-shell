@@ -55,10 +55,13 @@ void sh_exec(char *command) {
       file_path = fpath(args[0]);
       status = command_exec(file_path, args);
       state_tracking(&should_run_next, status, commands->next_op);
+      commands = commands->next;
     } else {
-      should_run_next = 1;
+      commands = commands->next;
+      if (commands) {
+        state_tracking(&should_run_next, status, commands->next_op);
+      }
     }
-    commands = commands->next;
   }
 
   free(file_path);
@@ -67,14 +70,12 @@ void sh_exec(char *command) {
 }
 
 void state_tracking(int *should_run, int status, list_op op) {
-  if (status != 0 && (op == AND_OP || op != OR_OP)) {
+  if (status != 0 && (op != AND_OP || op == OR_OP)) {
     *should_run = 1;
-  } else if (status == 0 && (op == OR_OP || op != AND_OP)) {
+  } else if (status == 0 && (op != OR_OP || op == AND_OP)) {
     *should_run = 1;
-  } else if (status != 0 && (op == OR_OP)) {
-    *should_run = 0;
   } else {
-    *should_run = 1;
+    *should_run = 0;
   }
 }
 
@@ -89,7 +90,8 @@ int command_exec(char *file_path, char **args) {
     return -1;
   } else if (pid == 0) {
     execve(file_path, args, NULL);
-    return 0;
+    perror("execution failed");
+    exit(EXIT_FAILURE);
   } else {
     pid_t child_pid = waitpid(pid, &status, 0);
     if (child_pid == -1) {
@@ -103,22 +105,22 @@ int command_exec(char *file_path, char **args) {
               ANSI_COLOR_RED
               "Child process %d exited with status  %d\n" ANSI_COLOR_RESET,
               child_pid, exit_status);
-      return -1;
     } else if (WIFSIGNALED(status)) {
       int signal_num = WTERMSIG(status);
       fprintf(stderr,
               ANSI_COLOR_RED
               "child process %d exited with signal %d\n" ANSI_COLOR_RESET,
               child_pid, signal_num);
-      return -1;
     } else if (WIFSTOPPED(status)) {
       int stop_signal = WSTOPSIG(status);
       fprintf(stderr,
               ANSI_COLOR_RED
               "Child process %d stopped by signal %d\n" ANSI_COLOR_RESET,
               child_pid, stop_signal);
-      return -1;
+    } else {
+      return WEXITSTATUS(status);
     }
   }
-  return 0;
+  perror("fork failed");
+  return EXIT_FAILURE;
 }

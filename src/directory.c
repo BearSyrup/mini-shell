@@ -10,9 +10,9 @@ int go_directory(char *directory) {
 
   if (chdir(full_path) != 0) {
     perror(directory);
-    return 0;
+    return -1;
   }
-  return 1;
+  return 0;
 }
 
 void get_working_dir(char **buff) {
